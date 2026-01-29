@@ -1,65 +1,122 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { supabase } from "../lib/supabase";
+import { Card, TopBar, NavLink, Button } from "./ui";
 
 export default function Home() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      setStatus("Chargement…");
+
+      const { data, error } = await supabase
+        .from("products")
+        .select("id,name,origin,quantity,availability,image_url, associations(id,name,contact_whatsapp,logo_url)")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setStatus(error.message);
+        setRows([]);
+      } else {
+        setStatus("");
+        setRows(data || []);
+      }
+    })();
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main>
+      <TopBar
+        title="Marché (MVP)"
+        right={
+          <div className="flex items-center gap-4">
+            <NavLink href="/associations">Associations</NavLink>
+            <NavLink href="/about">Présentation</NavLink>
+            <NavLink href="/admin/login">Espace association</NavLink>
+          </div>
+        }
+      />
+
+      <Card
+        title="Produits disponibles"
+        subtitle="Contact direct via WhatsApp de l’association — pas de paiement dans le MVP."
+      >
+        {status && <div className="text-sm text-slate-700">{status}</div>}
+
+        <div className="mt-4 grid gap-3">
+          {rows.map((r) => {
+            const a = r.associations;
+            const assocId = a?.id as string | undefined;
+
+            return (
+              <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex gap-3">
+                    {r.image_url ? (
+                      <img
+                        src={r.image_url}
+                        alt=""
+                        className="h-16 w-16 rounded-2xl border border-slate-200 object-cover"
+                      />
+                    ) : (
+                      <div className="h-16 w-16 rounded-2xl border border-slate-200 bg-slate-50" />
+                    )}
+
+                    <div>
+                      <div className="text-base font-semibold text-slate-900">{r.name}</div>
+
+                      <div className="mt-1 inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700">
+                        Disponible
+                      </div>
+
+                      <div className="mt-2 text-sm text-slate-700">
+                        Origine: {r.origin || "-"} · Quantité: {r.quantity || "-"} · Dispo:{" "}
+                        {r.availability || "-"}
+                      </div>
+
+                      <div className="mt-2 text-sm text-slate-700">
+                        Association:{" "}
+                        {assocId ? (
+                          <Link className="font-medium underline" href={`/associations/${assocId}`}>
+                            {a?.name || "-"}
+                          </Link>
+                        ) : (
+                          <span className="font-medium">{a?.name || "-"}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {assocId && (
+                      <Link href={`/associations/${assocId}`}>
+                        <Button variant="ghost">Voir la fiche</Button>
+                      </Link>
+                    )}
+                    <a
+                      href={`https://wa.me/${a?.contact_whatsapp || ""}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Button>WhatsApp</Button>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {rows.length === 0 && !status && (
+            <div className="text-sm text-slate-700">
+              Aucun produit pour le moment. (Ajoute-en via l’espace association.)
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </Card>
+    </main>
   );
 }
