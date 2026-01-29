@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { Card, Input, Button, TopBar, NavLink } from "../../ui";
-import { uploadAssociationLogo } from "../../lib/uploadAssociationLogo";
-
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -22,14 +20,15 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
-  const [logoUploading, setLogoUploading] = useState(false);
-
 
   async function onLogin() {
     setStatus("");
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
       if (error) throw error;
       router.replace("/admin");
     } catch (e: any) {
@@ -68,15 +67,8 @@ export default function AdminLogin() {
 
           {status && <div className="text-sm text-rose-700">{status}</div>}
 
-          <div className="text-sm text-slate-700">
-            Pas de compte ?{" "}
-            <a className="underline" href="/admin/register">
-              Créer un compte
-            </a>
-          </div>
-
           <div className="text-xs text-slate-500">
-            Astuce: si l’inscription est désactivée, crée les comptes dans Supabase → Authentication → Users.
+            Astuce: crée les comptes dans Supabase → Authentication → Users.
           </div>
         </div>
       </Card>
