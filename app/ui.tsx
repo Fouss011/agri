@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export function Card({
   title,
@@ -33,7 +36,6 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   );
 }
 
-
 export function Button({
   children,
   variant = "primary",
@@ -58,22 +60,86 @@ export function Button({
 }
 
 export function TopBar({
+  title,
   left,
   right,
-  title,
 }: {
+  title: string;
   left?: React.ReactNode;
   right?: React.ReactNode;
-  title?: string;
 }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 640) setOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   return (
-    <div className="mb-6 flex items-center justify-between gap-3">
-      <div className="flex items-center gap-3">
-        {left}
-        {title && <div className="text-lg font-semibold">{title}</div>}
+    <header className="mb-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          {left && <div className="hidden sm:block">{left}</div>}
+          <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-3">{right}</div>
+
+        <button
+          className="sm:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white"
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Menu"
+        >
+          ☰
+        </button>
       </div>
-      <div className="flex items-center gap-2">{right}</div>
-    </div>
+
+      <div className="sm:hidden mt-3">
+        {left && <div className="mb-2">{left}</div>}
+
+        {open && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-3">
+            <div className="grid gap-2 text-sm">
+              <Link
+                className="rounded-xl px-3 py-2 hover:bg-slate-50"
+                href="/"
+                onClick={() => setOpen(false)}
+              >
+                Accueil
+              </Link>
+              <Link
+                className="rounded-xl px-3 py-2 hover:bg-slate-50"
+                href="/associations"
+                onClick={() => setOpen(false)}
+              >
+                Associations
+              </Link>
+              <Link
+                className="rounded-xl px-3 py-2 hover:bg-slate-50"
+                href="/about"
+                onClick={() => setOpen(false)}
+              >
+                Présentation
+              </Link>
+              <Link
+                className="rounded-xl px-3 py-2 hover:bg-slate-50"
+                href="/admin/login"
+                onClick={() => setOpen(false)}
+              >
+                Espace association
+              </Link>
+
+              {right ? (
+                <div className="mt-2 border-t border-slate-200 pt-2">{right}</div>
+              ) : null}
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
   );
 }
 
